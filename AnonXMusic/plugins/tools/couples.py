@@ -9,7 +9,7 @@ from pyrogram.enums import *
 
 #BOT FILE NAME
 from AnonXMusic import app as app
-from AnonXMusic.core.couples_db import _get_image, get_couple
+from SynaxMusic.AnonXMusic.mongo.couples_db import _get_image, get_couple
 
 def dt():
     now = datetime.now()
