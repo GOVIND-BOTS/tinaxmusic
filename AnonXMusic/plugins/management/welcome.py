@@ -1,122 +1,145 @@
-#<<<<<<<<<<<<<<DiL>>>>>>>>>>>>>>#
-#<<<<<<<<<<<<<<Give<Credit<Else>You>Chutiya>>>>>>>>>>>>>>#
-import os
-from PIL import ImageDraw, Image, ImageFont, ImageChops
+import os 
+import random
+from datetime import datetime 
+from telegraph import upload_file
+from PIL import Image , ImageDraw
 from pyrogram import *
 from pyrogram.types import *
-from logging import getLogger
-from AnonXMusic import app
+from pyrogram.enums import *
 
-LOGGER = getLogger(__name__)
+#BOT FILE NAME
+from AnonXMusic import app as app
+from AnonXMusic.mongo.couples_db import _get_image, get_couple
 
-class WelDatabase:
-    def __init__(self):
-        self.data = {}
+def dt():
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M")
+    dt_list = dt_string.split(" ")
+    return dt_list
+    
 
-    async def find_one(self, chat_id):
-        return chat_id in self.data
+def dt_tom():
+    a = (
+        str(int(dt()[0].split("/")[0]) + 1)
+        + "/"
+        + dt()[0].split("/")[1]
+        + "/"
+        + dt()[0].split("/")[2]
+    )
+    return a
 
-    async def add_wlcm(self, chat_id):
-        self.data[chat_id] = {}
+tomorrow = str(dt_tom())
+today = str(dt()[0])
 
-    async def rm_wlcm(self, chat_id):
-        if chat_id in self.data:
-            del self.data[chat_id]
-
-wlcm = WelDatabase()
-
-class temp:
-    ME = None
-    CURRENT = 2
-    CANCEL = False
-    MELCOW = {}
-    U_NAME = None
-    B_NAME = None
-
-def circle(pfp, size=(500, 500)):
-    pfp = pfp.resize(size, Image.LANCZOS).convert("RGBA")
-    bigsize = (pfp.size[0] * 3, pfp.size[1] * 3)
-    mask = Image.new("L", bigsize, 0)
-    draw = ImageDraw.Draw(mask)
-    draw.ellipse((0, 0) + bigsize, fill=255)
-    mask = mask.resize(pfp.size, Image.LANCZOS)
-    mask = ImageChops.darker(mask, pfp.split()[-1])
-    pfp.putalpha(mask)
-    return pfp
-
-
-def welcomepic(pic, user, chatname, id, uname):
-    background = Image.open("AnonXMusic/assets/dil.png")
-    pfp = Image.open(pic).convert("RGBA")
-    pfp = circle(pfp)
-    pfp = pfp.resize((1157, 1158))
-    draw = ImageDraw.Draw(background)
-    font = ImageFont.truetype('AnonXMusic/assets/font.ttf', size=110)
-    welcome_font = ImageFont.truetype('AnonXMusic/assets/font.ttf', size=60)
-    draw.text((1800, 700), f'NAME: {user}', fill=(255, 255, 255), font=font)
-    draw.text((1800, 830), f'ID: {id}', fill=(255, 255, 255), font=font)
-    draw.text((1800, 965), f"USERNAME : {uname}", fill=(255, 255, 255), font=font)
-    pfp_position = (391, 336)
-    background.paste(pfp, pfp_position, pfp)
-    background.save(f"downloads/welcome#{id}.png")
-    return f"downloads/welcome#{id}.png"
-
-@app.on_chat_member_updated(filters.group, group=-3)
-async def greet_group(_, member: ChatMemberUpdated):
-    chat_id = member.chat.id
-    A = await wlcm.find_one(chat_id)
-    if (
-        not member.new_chat_member
-        or member.new_chat_member.status in {"banned", "left", "restricted"}
-        or member.old_chat_member
-    ):
-        return
-    user = member.new_chat_member.user if member.new_chat_member else member.from_user
+@app.on_message(filters.command("couples"))
+async def ctest(_, message):
+    cid = message.chat.id
+    if message.chat.type == ChatType.PRIVATE:
+        return await message.reply_text("This command only works in groups.")
     try:
-        pic = await app.download_media(
-            user.photo.big_file_id, file_name=f"pp{user.id}.png"
-        )
-    except AttributeError:
-        pic = "AarohiX/assets/dil.png"
-    if (temp.MELCOW).get(f"welcome-{member.chat.id}") is not None:
-        try:
-            await temp.MELCOW[f"welcome-{member.chat.id}"].delete()
-        except Exception as e:
-            LOGGER.error(e)
-    try:
-        welcomeimg = welcomepic(
-            pic, user.first_name, member.chat.title, user.id, user.username
-        )
-        temp.MELCOW[f"welcome-{member.chat.id}"] = await app.send_photo(
-            member.chat.id,
-            photo=welcomeimg,
-            caption=f"""
-Wᴇʟᴄᴏᴍᴇ Tᴏ {member.chat.title}
+     #  is_selected = await get_couple(cid, today)
+     #  if not is_selected:
+         msg = await message.reply_text("Generating Couples Image...")
+         #GET LIST OF USERS
+         list_of_users = []
+
+         async for i in app.get_chat_members(message.chat.id, limit=50):
+             if not i.user.is_bot:
+               list_of_users.append(i.user.id)
+
+         c1_id = random.choice(list_of_users)
+         c2_id = random.choice(list_of_users)
+         while c1_id == c2_id:
+              c1_id = random.choice(list_of_users)
+
+
+         photo1 = (await app.get_chat(c1_id)).photo
+         photo2 = (await app.get_chat(c2_id)).photo
+ 
+         N1 = (await app.get_users(c1_id)).mention 
+         N2 = (await app.get_users(c2_id)).mention
+         
+         try:
+            p1 = await app.download_media(photo1.big_file_id, file_name="pfp.png")
+         except Exception:
+            p1 = "AnonXMusic/assets/upic.png"
+         try:
+            p2 = await app.download_media(photo2.big_file_id, file_name="pfp1.png")
+         except Exception:
+            p2 = "AnonXMusic/assets/upic.png"
+            
+         img1 = Image.open(f"{p1}")
+         img2 = Image.open(f"{p2}")
+
+         img = Image.open("AnonXMusic/assets/cppic.png")
+
+         img1 = img1.resize((437,437))
+         img2 = img2.resize((437,437))
+
+         mask = Image.new('L', img1.size, 0)
+         draw = ImageDraw.Draw(mask) 
+         draw.ellipse((0, 0) + img1.size, fill=255)
+
+         mask1 = Image.new('L', img2.size, 0)
+         draw = ImageDraw.Draw(mask1) 
+         draw.ellipse((0, 0) + img2.size, fill=255)
+
+
+         img1.putalpha(mask)
+         img2.putalpha(mask1)
+
+         draw = ImageDraw.Draw(img)
+
+         img.paste(img1, (116, 160), img1)
+         img.paste(img2, (789, 160), img2)
+
+         img.save(f'test_{cid}.png')
+    
+         TXT = f"""
+**𝐓ᴏᴅᴀʏ's 𝐒ᴇʟᴇᴄᴛᴇᴅ 𝐂ᴏᴜᴘʟᴇs 🎉 :
 ➖➖➖➖➖➖➖➖➖➖➖➖
-Nᴀᴍᴇ ✧ {user.mention}
-Iᴅ ✧ {user.id}
-Usᴇʀɴᴀᴍᴇ ✧ @{user.username}
+{N1} + {N2} = ❣️
 ➖➖➖➖➖➖➖➖➖➖➖➖
-""",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(f"⦿ ᴀᴅᴅ ᴍᴇ ⦿", url=f"https://t.me/MusicxKhushiBot?startgroup=true")]])
-        )
+𝐍ᴇxᴛ 𝐂ᴏᴜᴘʟᴇs 𝐖ɪʟʟ 𝐁ᴇ 𝐒ᴇʟᴇᴄᴛᴇᴅ 𝐎ɴ {tomorrow} !!**
+"""
+    
+         await message.reply_photo(f"test_{cid}.png", caption=TXT)
+         await msg.delete()
+         a = upload_file(f"test_{cid}.png")
+         for x in a:
+           img = "https://graph.org/" + x
+           couple = {"c1_id": c1_id, "c2_id": c2_id}
+          # await save_couple(cid, today, couple, img)
+    
+         
+      # elif is_selected:
+      #   msg = await message.reply_text("𝐆ᴇᴛᴛɪɴɢ 𝐓ᴏᴅᴀʏs 𝐂ᴏᴜᴘʟᴇs 𝐈ᴍᴀɢᴇ...")
+      #   b = await _get_image(cid)
+       #  c1_id = int(is_selected["c1_id"])
+       #  c2_id = int(is_selected["c2_id"])
+       #  c1_name = (await app.get_users(c1_id)).first_name
+        # c2_name = (await app.get_users(c2_id)).first_name
+         
+      #   TXT = f"""
+#**𝐓ᴏᴅᴀʏ's 𝐒ᴇʟᴇᴄᴛᴇᴅ 𝐂ᴏᴜᴘʟᴇs 🎉 :
+#➖➖➖➖➖➖➖➖➖➖➖➖
+#[{c1_name}](tg://openmessage?user_id={c1_id}) + [{c2_name}](tg://openmessage?user_id={c2_id}) = ❣️
+#➖➖➖➖➖➖➖➖➖➖➖➖
+#𝐍ᴇxᴛ 𝐂ᴏᴜᴘʟᴇs 𝐖ɪʟʟ 𝐁ᴇ 𝐒ᴇʟᴇᴄᴛᴇᴅ 𝐎ɴ {tomorrow} !!**
+#"""
+ #        await message.reply_photo(b, caption=TXT)
+        # await msg.delete()
     except Exception as e:
-        LOGGER.error(e)
+        print(str(e))
     try:
-        os.remove(f"downloads/welcome#{user.id}.png")
-        os.remove(f"downloads/pp{user.id}.png")
-    except Exception as e:
-        pass
+      os.remove(f"./downloads/pfp1.png")
+      os.remove(f"./downloads/pfp2.png")
+      os.remove(f"test_{cid}.png")
+    except Exception:
+       pass
+         
 
-@app.on_message(filters.new_chat_members & filters.group, group=-1)
-async def bot_wel(_, message):
-    for u in message.new_chat_members:
-        if u.id == app.me.id:
-            await app.send_message(LOG_CHANNEL_ID, f"""
-NEW GROUP
-➖➖➖➖➖➖➖➖➖➖➖➖
-NAME: {message.chat.title}
-ID: {message.chat.id}
-USERNAME: @{message.chat.username}
-➖➖➖➖➖➖➖➖➖➖➖➖
-""")
+__mod__ = "COUPLES"
+__help__ = """
+**» /couples** - Get Todays Couples Of The Group In Interactive View
+"""
