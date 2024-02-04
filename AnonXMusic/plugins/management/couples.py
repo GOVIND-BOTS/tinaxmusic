@@ -8,8 +8,8 @@ from pyrogram.types import *
 from pyrogram.enums import *
 
 #BOT FILE NAME
-from AloneXMusic import app as app
-from AloneXMusic.mongo.couples_db import _get_image, get_couple
+from AnonXMusic import app as app
+from AnonXMusic.mongo.couples_db import _get_image, get_couple
 
 def dt():
     now = datetime.now()
