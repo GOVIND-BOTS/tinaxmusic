@@ -10,7 +10,7 @@ from pyrogram.enums import *
 #BOT FILE NAME
 from AnonXMusic import app as app
 from AnonXMusic.mongo.couples_db import _get_image, get_couple
-from AnonXMusic.plugins.management.couples_db
+
 def dt():
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M")
