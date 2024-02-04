@@ -1,4 +1,4 @@
-from AnonXMusic.utils.mongo import db
+from AnonXMusic.utils.mongo import couples_db
 
 coupledb = db.couple
 
